@@ -64,7 +64,8 @@ void* PxTempAllocator::allocate(size_t size, const char* filename, PxI32 line)
 	if(!size)
 		return 0;
 
-	PxU32 index = PxMax(PxHighestSetBit(PxU32(size) + sizeof(Chunk) - 1), sMinIndex);
+	// On MacOS, the build breaks without this: PxHighestSetBit(PxU32(size) + sizeof(Chunk) - 1) is an ambiguous overload on macOS (size_t = unsigned long matches neither the uint32_t nor uint64_t overload; Linux/Windows aliases make it compile upstream)
+	PxU32 index = PxMax(PxHighestSetBit(PxU64(PxU32(size) + sizeof(Chunk) - 1)), sMinIndex);
 
 	Chunk* chunk = 0;
 	if(index < sMaxIndex)
