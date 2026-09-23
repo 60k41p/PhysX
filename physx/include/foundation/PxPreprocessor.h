@@ -382,7 +382,10 @@ struct A {
 This declaration style is parsed correctly by Visual Assist.
 */
 #ifndef PX_ALIGN
-	#if PX_WINDOWS_FAMILY
+	// The MSVC spelling only works for compilers in the MSVC dialect (MSVC and clang-cl).
+	// Compilers with a GNU driver (GCC, Clang with llvm-mingw) cannot parse __declspec,
+	// so they must take the GNU branch below.
+	#if PX_WINDOWS_FAMILY && PX_VC
 		#define PX_ALIGN(alignment, decl) __declspec(align(alignment)) decl
 		#define PX_ALIGN_PREFIX(alignment) __declspec(align(alignment))
 		#define PX_ALIGN_SUFFIX(alignment)
@@ -468,7 +471,9 @@ PX_CUDA_CALLABLE PX_INLINE void PX_UNUSED(T const&)
 // This assert works on win32/win64, but may need further specialization on other platforms.
 // Some GCC compilers need the compiler flag -malign-double to be set.
 // Apparently the apple-clang-llvm compiler doesn't support malign-double.
-#if PX_APPLE_FAMILY || (PX_CLANG && !PX_ARM)
+// Clang with a GNU driver on Windows (e.g. llvm-mingw) is LLP64 like MSVC,
+// so it must take the `long long` branch below, not the LP64 `long` branch.
+#if PX_APPLE_FAMILY || (PX_CLANG && !PX_ARM && !PX_WINDOWS_FAMILY)
 	struct PxPackValidation
 	{
 		char _;

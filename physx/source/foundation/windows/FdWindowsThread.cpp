@@ -325,6 +325,7 @@ void PxThreadImpl::setName(const char* name)
 
 		// C++ Exceptions are disabled for this project, but SEH is not (and cannot be)
 		// http://stackoverflow.com/questions/943087/what-exactly-will-happen-if-i-disable-c-exceptions-in-a-project
+#if PX_VC
 		__try
 		{
 			RaiseException(NS_MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
@@ -333,6 +334,14 @@ void PxThreadImpl::setName(const char* name)
 		{
 			// this runs if not attached to a debugger (thus not really naming the thread)
 		}
+#else
+		// Compilers without MSVC SEH (e.g. Clang with a GNU driver) cannot use __try/__except:
+		// only raise when a debugger is attached to consume the exception.
+		if(IsDebuggerPresent())
+		{
+			RaiseException(NS_MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+		}
+#endif
 	}
 }
 
